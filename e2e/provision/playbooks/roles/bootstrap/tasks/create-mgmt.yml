@@ -32,6 +32,9 @@
           extraMounts:
             - hostPath: /var/run/{{ container_engine }}.sock
               containerPath: /var/run/{{ container_engine }}.sock
+      networking:
+        disableDefaultCNI: true
+        podSubnet: 192.168.0.0/16
       {% if lookup('ansible.builtin.env', 'DOCKER_REGISTRY_MIRRORS') %}
       containerdConfigPatches:
         - |-
@@ -56,6 +59,12 @@
     owner: "{{ ansible_user_uid }}"
     group: "{{ ansible_user_gid }}"
     mode: '0644'
+
+- name: Install the Calico operator and custom resource definitions.
+  ansible.builtin.command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
+
+- name: Install Calico
+  ansible.builtin.command: kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml
 
 - name: Wait for Kind Nodes to become ready
   kubernetes.core.k8s:
